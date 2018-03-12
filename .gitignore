@@ -1,0 +1,10 @@
+*.uvoptx
+Demo/
+*.htm
+obj/
+RTE/
+*.uvprojx
+*.hblen
+*.map
+*.scvd
+*.lst
