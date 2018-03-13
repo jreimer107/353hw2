@@ -1739,12 +1739,6 @@ void lcd_print_character(
 {
 	lcd_set_pos(X_pixel, X_pixel + FONT_WIDTH - 1, Y_pixel, Y_pixel + FONT_HEIGHT - 1);
 
-	lcd_wr
-
-
-
-
-
 
 
 	uint16_t i,j;
@@ -1752,10 +1746,25 @@ void lcd_print_character(
 	uint16_t byte_index;
 	uint16_t bytes_per_row;
 
+	uint16_t char_start, char_end;
+	char_start = (character - 32) * (FONT_WIDTH + FONT_HEIGHT + 5);
+	char_end = char_start + (FONT_WIDTH * FONT_HEIGHT);
+
 	bytes_per_row = FONT_WIDTH / 8;
   if( (FONT_WIDTH % 8) != 0)
     bytes_per_row++;
 
+uint8_t bit;
+for (i = char_end; i > char_start; i--) { //Does this go by byte?
+	for (j = 0; j < 8; j++) { //For each bit of the selected byte
+		bit = (courierNewBitmap[i] & ( 1 << j )) >> j; //Bitmask, shift to bit 0.
+		if (bit) lcd_write_data_u16(fg_color);
+		else lcd_write_data_u16(bg_color);
+	}
+}
+
+
+/*
 	for (i=0;i< FONT_HEIGHT ;i++) {
 		for(j= 0; j < FONT_WIDTH; j++) {
 			if((j %8) == 0){
@@ -1767,6 +1776,7 @@ void lcd_print_character(
 			data  = data << 1;
 		}
 	}
+	*/
 }
 
 /**********************************************************
