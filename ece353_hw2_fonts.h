@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "lcd.h"
+//#include "lcd.h"
 
 #define       FONT_HEIGHT     16	// height of characters in pixels
 #define       FONT_WIDTH      11	// width of characters in pixels
@@ -18,17 +18,17 @@ extern const uint8_t courierNewBitmap[];
 /**********************************************************
 * Function Name: lcd_print_character
 **********************************************************
-* Will render the pixels of a character bitmap with 
-* the bottom left of the character starting at 
+* Will render the pixels of a character bitmap with
+* the bottom left of the character starting at
 * pixel (X_pixel,Y_pixel).
 **********************************************************/
 void lcd_print_character(
-	uint16_t X_pixel, 
+	uint16_t X_pixel,
 	uint16_t Y_pixel,
   uint16_t fg_color,
 	uint16_t bg_color,
 	char character);
-		
+
 /**********************************************************
 * Function Name: lcd_print_stringXY
 **********************************************************
@@ -49,11 +49,11 @@ void lcd_print_character(
 * Returns: Nothing
 **********************************************************/
 void lcd_print_stringXY(
-    char *msg, 
+    char *msg,
     int8_t X,
 		int8_t Y,
-    uint16_t fg_color, 
+    uint16_t fg_color,
     uint16_t bg_color
 );
-    
+
 #endif

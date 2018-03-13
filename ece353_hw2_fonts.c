@@ -1741,47 +1741,34 @@ void lcd_print_character(
 
 
 
-	uint16_t i,j;
-	uint16_t char_start, char_end;
+	int8_t i;
+	int8_t j;
+	uint16_t char_start;
+	uint16_t char_end;
 	char_start = (character - 32) * (FONT_WIDTH + FONT_HEIGHT + 5);  //Need 32, this probably isn't the way
 	char_end = char_start + 31;
 
 	uint8_t byte_left, byte_right; 												//go from byte 15 to 5
 	uint8_t bit;
-	
-	for (i = char_end; i > char_start; i -= 2) { 				 //Does this go by byte?
+
+	for (i = char_end; i >= char_start; i -= 2) { 				 //Does this go by byte?
 		byte_right = courierNewBitmap[i];
 		byte_left = courierNewBitmap[i - 1];
-		
-		//Loop through right byte first
-		for (j = 7; j >= 5; j--) { 											 //For each bit of the selected byte
-			bit = (byte_right & ( 1 << j )) >> j; 				 //Bitmask, shift to bit 0.
+
+		//Loop through right byte first (bits 7 thru 5 are useless)
+		for (j = 4; j >= 0; j--) { 								//For each bit of the selected byte
+			bit = (byte_right & (1 << j)); 				 	//Bitmask, shift to bit 0.
 			if (bit) lcd_write_data_u16(fg_color);
 			else lcd_write_data_u16(bg_color);
 		}
-		
+
 		//Left byte second
-		for (j = 7; j != 0; j--) { 											 //For each bit of the selected byte
-			bit = (byte_left & ( 1 << j )) >> j; 				 //Bitmask, shift to bit 0.
+		for (j = 7; j >= 0; j--) { 								//For each bit of the selected byte
+			bit = (byte_left & (1 << j)); 				 	//Bitmask, shift to bit 0.
 			if (bit) lcd_write_data_u16(fg_color);
 			else lcd_write_data_u16(bg_color);
 		}
 	}
-
-
-/*
-	for (i=0;i< FONT_HEIGHT ;i++) {
-		for(j= 0; j < FONT_WIDTH; j++) {
-			if((j %8) == 0){
-				byte_index = (i*bytes_per_row) + j/8;
-				data = courierNewBitmap[byte_index];
-			}
-			if ( data & 0x80) lcd_write_data_u16(fg_color);
-			else lcd_write_data_u16(bg_color);
-			data  = data << 1;
-		}
-	}
-	*/
 }
 
 /**********************************************************
@@ -1809,11 +1796,21 @@ void lcd_print_stringXY(
 		int8_t Y,
     uint16_t fg_color,
     uint16_t bg_color
-
-
 )
 {
+	//Get pixel coordinates from row coordinates
+	uint16_t X_pixel;
+	uint16_t Y_pixel;
+	X_pixel = X * CHAR_COLUMNS + X_PADDING;
+	Y_pixel = Y * CHAR_ROWS;
+
 	while(msg) {
+		//Detect new line
+		if (X_pixel > (CHAR_COLUMNS * FONT_WIDTH) - X_PADDING) {
+			X_pixel = X * CHAR_COLUMNS + X_PADDING;
+			Y_pixel += FONT_HEIGHT;
+			while (*msg == ' ') msg++;			//Dont print space if new line
+		}
 		lcd_print_character(X, Y, fg_color, bg_color, *msg);
 		X += FONT_WIDTH;
 		msg++;
