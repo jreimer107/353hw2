@@ -1742,26 +1742,31 @@ void lcd_print_character(
 
 
 	uint16_t i,j;
-	uint8_t data;
-	uint16_t byte_index;
-	uint16_t bytes_per_row;
-
 	uint16_t char_start, char_end;
-	char_start = (character - 32) * (FONT_WIDTH + FONT_HEIGHT + 5);
-	char_end = char_start + (FONT_WIDTH * FONT_HEIGHT);
+	char_start = (character - 32) * (FONT_WIDTH + FONT_HEIGHT + 5);  //Need 32, this probably isn't the way
+	char_end = char_start + 31;
 
-	bytes_per_row = FONT_WIDTH / 8;
-  if( (FONT_WIDTH % 8) != 0)
-    bytes_per_row++;
-
-uint8_t bit;
-for (i = char_end; i > char_start; i--) { //Does this go by byte?
-	for (j = 0; j < 8; j++) { //For each bit of the selected byte
-		bit = (courierNewBitmap[i] & ( 1 << j )) >> j; //Bitmask, shift to bit 0.
-		if (bit) lcd_write_data_u16(fg_color);
-		else lcd_write_data_u16(bg_color);
+	uint8_t byte_left, byte_right; 												//go from byte 15 to 5
+	uint8_t bit;
+	
+	for (i = char_end; i > char_start; i -= 2) { 				 //Does this go by byte?
+		byte_right = courierNewBitmap[i];
+		byte_left = courierNewBitmap[i - 1];
+		
+		//Loop through right byte first
+		for (j = 7; j >= 5; j--) { 											 //For each bit of the selected byte
+			bit = (byte_right & ( 1 << j )) >> j; 				 //Bitmask, shift to bit 0.
+			if (bit) lcd_write_data_u16(fg_color);
+			else lcd_write_data_u16(bg_color);
+		}
+		
+		//Left byte second
+		for (j = 7; j != 0; j--) { 											 //For each bit of the selected byte
+			bit = (byte_left & ( 1 << j )) >> j; 				 //Bitmask, shift to bit 0.
+			if (bit) lcd_write_data_u16(fg_color);
+			else lcd_write_data_u16(bg_color);
+		}
 	}
-}
 
 
 /*
@@ -1808,5 +1813,9 @@ void lcd_print_stringXY(
 
 )
 {
-
+	while(msg) {
+		lcd_print_character(X, Y, fg_color, bg_color, *msg);
+		X += FONT_WIDTH;
+		msg++;
+	}
 }
