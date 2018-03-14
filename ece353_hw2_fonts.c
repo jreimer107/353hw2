@@ -1,11 +1,13 @@
 #include "ece353_hw2_fonts.h"
 #include "../peripherals/include/lcd.h"
-/// Hmmmm?  Do I need an include here of ///
-/// lcd.h to access stuff in lcd.c ?  ////
-
 //
 //  Font data for Courier New 13pt
 //
+
+#define BIT 1
+#define BYTE 8
+#define BYTES_PER_CHAR ((FONT_WIDTH/BYTE)
+
 
 // Character bitmaps for Courier New 13pt
 const uint8_t courierNewBitmap[] =
@@ -1737,34 +1739,39 @@ void lcd_print_character(
 	uint16_t bg_color,
 	char character)
 {
-	lcd_set_pos(X_pixel, X_pixel + FONT_WIDTH - 1, Y_pixel, Y_pixel + FONT_HEIGHT - 1);
-
-
-
-	int8_t i;
-	int8_t j;
+	int16_t i;
+	int16_t j;
 	uint16_t char_start;
 	uint16_t char_end;
-	char_start = (character - 32) * (FONT_WIDTH + FONT_HEIGHT + 5);  //Need 32, this probably isn't the way
-	char_end = char_start + 31;
-
-	uint8_t byte_left, byte_right; 												//go from byte 15 to 5
+	uint8_t byte_left;
+	uint8_t byte_right; 
 	uint8_t bit;
+	
+	lcd_set_pos(X_pixel, X_pixel + FONT_WIDTH - 1, Y_pixel, Y_pixel + FONT_HEIGHT - 1);
+	
+	//Find start row and end row of bitmap (double words)
+	char_start = (character - 32) * (((FONT_WIDTH/8)+1) * FONT_HEIGHT);
+	char_end = char_start + 30;
+	
+	for (i = char_end; i >= char_start; i -= 2) {
+		//Get row of data, useful data is from bit 15 to bit 5.
+		byte_right = courierNewBitmap[i+1];
+		byte_left = courierNewBitmap[i];
 
-	for (i = char_end; i >= char_start; i -= 2) { 				 //Does this go by byte?
-		byte_right = courierNewBitmap[i];
-		byte_left = courierNewBitmap[i - 1];
-
-		//Loop through right byte first (bits 7 thru 5 are useless)
-		for (j = 4; j >= 0; j--) { 								//For each bit of the selected byte
-			bit = (byte_right & (1 << j)); 				 	//Bitmask, shift to bit 0.
+		//For each bit, extract with bitmask.
+		//If the bit is 0, print the background color
+		//If the bit is 1, print the foreground color
+		
+		//Loop through right byte first (rightmost 5 bits not used)
+		for (j = 5; j < 8; j++) {
+			bit = (byte_right & (1 << j)); 
 			if (bit) lcd_write_data_u16(fg_color);
 			else lcd_write_data_u16(bg_color);
 		}
 
-		//Left byte second
-		for (j = 7; j >= 0; j--) { 								//For each bit of the selected byte
-			bit = (byte_left & (1 << j)); 				 	//Bitmask, shift to bit 0.
+		//Left byte second, all bits used
+		for (j = 0; j < 8; j++) {
+			bit = (byte_left & (1 << j));
 			if (bit) lcd_write_data_u16(fg_color);
 			else lcd_write_data_u16(bg_color);
 		}
@@ -1801,18 +1808,22 @@ void lcd_print_stringXY(
 	//Get pixel coordinates from row coordinates
 	uint16_t X_pixel;
 	uint16_t Y_pixel;
-	X_pixel = X * CHAR_COLUMNS + X_PADDING;
-	Y_pixel = Y * CHAR_ROWS;
-
-	while(msg) {
-		//Detect new line
-		if (X_pixel > (CHAR_COLUMNS * FONT_WIDTH) - X_PADDING) {
-			X_pixel = X * CHAR_COLUMNS + X_PADDING;
+	X_pixel = X * FONT_WIDTH + X_PADDING;
+	Y_pixel = Y * FONT_HEIGHT;
+	
+	while(*msg) {
+		//Detect new line, wrap around to start X
+		if (X_pixel >= (CHAR_COLUMNS * FONT_WIDTH) + X_PADDING) {
+			//If new line set X back to start and increment row
+			X_pixel = X * FONT_WIDTH + X_PADDING;
 			Y_pixel += FONT_HEIGHT;
 			while (*msg == ' ') msg++;			//Dont print space if new line
 		}
-		lcd_print_character(X, Y, fg_color, bg_color, *msg);
-		X += FONT_WIDTH;
+		//Wrap around to top if off bottom edge
+		if (Y_pixel >= CHAR_ROWS * FONT_HEIGHT) Y_pixel = 0;
+		
+		lcd_print_character(X_pixel, Y_pixel, fg_color, bg_color, *msg);
+		X_pixel += FONT_WIDTH;
 		msg++;
 	}
 }
