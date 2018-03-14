@@ -1,16 +1,31 @@
+//JOHN REIMER
+
 #ifndef __ECE353_HW2_FONTS_H__
 #define __ECE353_HW2_FONTS_H__
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-//#include "lcd.h"
+#include "../peripherals/include/lcd.h"
+
 
 #define       FONT_HEIGHT     16	// height of characters in pixels
 #define       FONT_WIDTH      11	// width of characters in pixels
 #define				CHAR_COLUMNS		(COLS/FONT_WIDTH)		// number of characters that fit across screen
 #define				CHAR_ROWS				(ROWS/FONT_HEIGHT)	// number of lines of text that fit on screen
 #define				X_PADDING       ((COLS % FONT_WIDTH)/2)
+#define 			Y_PADDING 			((ROWS % FONT_HEIGHT)/2)
+
+#define 			BIT 							1
+#define	 			BYTE 							8
+#define 			BYTES_PER_CHAR 		(((FONT_WIDTH / BYTE) + BIT) * FONT_HEIGHT)
+#define 			BYTES_PER_ROW 		2
+#define 			LAST_ROW 					(BYTES_PER_CHAR - BYTES_PER_ROW)
+#define 			DATA_START_RIGHT 	5
+#define 			DATA_START_LEFT 	0
+
+
+
 
 /* Font data for Sitka Small 12pt */
 extern const uint8_t courierNewBitmap[];

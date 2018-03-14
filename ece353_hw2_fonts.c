@@ -1,13 +1,10 @@
+//JOHN REIMER
+
 #include "ece353_hw2_fonts.h"
-#include "../peripherals/include/lcd.h"
+
 //
 //  Font data for Courier New 13pt
 //
-
-#define BIT 1
-#define BYTE 8
-#define BYTES_PER_CHAR ((FONT_WIDTH/BYTE)
-
 
 // Character bitmaps for Courier New 13pt
 const uint8_t courierNewBitmap[] =
@@ -1744,34 +1741,34 @@ void lcd_print_character(
 	uint16_t char_start;
 	uint16_t char_end;
 	uint8_t byte_left;
-	uint8_t byte_right; 
+	uint8_t byte_right;
 	uint8_t bit;
-	
-	lcd_set_pos(X_pixel, X_pixel + FONT_WIDTH - 1, Y_pixel, Y_pixel + FONT_HEIGHT - 1);
-	
+
+	lcd_set_pos(X_pixel, X_pixel + FONT_WIDTH - BIT, Y_pixel, Y_pixel + FONT_HEIGHT - BIT);
+
 	//Find start row and end row of bitmap (double words)
-	char_start = (character - 32) * (((FONT_WIDTH/8)+1) * FONT_HEIGHT);
-	char_end = char_start + 30;
-	
-	for (i = char_end; i >= char_start; i -= 2) {
+	char_start = (character - BYTES_PER_CHAR) * BYTES_PER_CHAR;
+	char_end = char_start + LAST_ROW;
+
+	for (i = char_end; i >= char_start; i -= BYTES_PER_ROW) {
 		//Get row of data, useful data is from bit 15 to bit 5.
-		byte_right = courierNewBitmap[i+1];
+		byte_right = courierNewBitmap[i + BIT];
 		byte_left = courierNewBitmap[i];
 
 		//For each bit, extract with bitmask.
 		//If the bit is 0, print the background color
 		//If the bit is 1, print the foreground color
-		
+
 		//Loop through right byte first (rightmost 5 bits not used)
-		for (j = 5; j < 8; j++) {
-			bit = (byte_right & (1 << j)); 
+		for (j = DATA_START_RIGHT; j < BYTE; j++) {
+			bit = (byte_right & (BIT << j));
 			if (bit) lcd_write_data_u16(fg_color);
 			else lcd_write_data_u16(bg_color);
 		}
 
 		//Left byte second, all bits used
-		for (j = 0; j < 8; j++) {
-			bit = (byte_left & (1 << j));
+		for (j = DATA_START_LEFT; j < BYTE; j++) {
+			bit = (byte_left & (BIT << j));
 			if (bit) lcd_write_data_u16(fg_color);
 			else lcd_write_data_u16(bg_color);
 		}
@@ -1809,8 +1806,8 @@ void lcd_print_stringXY(
 	uint16_t X_pixel;
 	uint16_t Y_pixel;
 	X_pixel = X * FONT_WIDTH + X_PADDING;
-	Y_pixel = Y * FONT_HEIGHT;
-	
+	Y_pixel = Y * FONT_HEIGHT + Y_PADDING;
+
 	while(*msg) {
 		//Detect new line, wrap around to start X
 		if (X_pixel >= (CHAR_COLUMNS * FONT_WIDTH) + X_PADDING) {
@@ -1819,9 +1816,9 @@ void lcd_print_stringXY(
 			Y_pixel += FONT_HEIGHT;
 			while (*msg == ' ') msg++;			//Dont print space if new line
 		}
-		//Wrap around to top if off bottom edge
-		if (Y_pixel >= CHAR_ROWS * FONT_HEIGHT) Y_pixel = 0;
-		
+		//Wrap around to top of screen if off bottom edge
+		if (Y_pixel >= CHAR_ROWS * FONT_HEIGHT) Y_pixel = Y_PADDING;
+
 		lcd_print_character(X_pixel, Y_pixel, fg_color, bg_color, *msg);
 		X_pixel += FONT_WIDTH;
 		msg++;
